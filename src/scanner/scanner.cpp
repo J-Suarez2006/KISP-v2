@@ -23,6 +23,7 @@ Scanner::Scanner()
         {"struct", STRUCT},
         {"enum", ENUM},
         {"int", DTYPE_INT},
+        {"uint", DTYPE_UINT},
         {"double", DTYPE_DOUBLE},
         {"char", DTYPE_CHAR},
         {"bool", DTYPE_BOOL},
@@ -32,6 +33,7 @@ Scanner::Scanner()
 
 void Scanner::loadSource(std::string source_code)
 {
+    m_source.clear();
     m_source = source_code;
 }
 void Scanner::addAccumulator()
@@ -203,7 +205,6 @@ void Scanner::scanCharacter()
                 .type = STRING_LITERAL,
                 .lexeme = m_accumulator,
                 .line = m_line
-
             });
         }
         else syntaxError(m_line, "unterminated string.");
@@ -249,6 +250,11 @@ void Scanner::scanCharacter()
 
 std::vector<Token> Scanner::scan()
 {
+    m_tokens.clear();
+    m_accumulator.clear();
+    m_idx = 0;
+    m_line = 0;
+
     while(m_idx < m_source.size())
     {   
         scanCharacter();        

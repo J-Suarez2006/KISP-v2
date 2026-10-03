@@ -20,17 +20,7 @@ PRIVATE
 include(CTest)
 enable_testing()
 
-add_executable(scanner-test test/scanner/scanner_test.cpp)
-target_include_directories(scanner-test
-PRIVATE
-    src
-    src/scanner
-    vendor
-)
-target_sources(scanner-test 
-PRIVATE 
-    src/scanner/scanner.cpp
-)
+add_subdirectory(test)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
