@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.10.0)
+project(KISP-v2 VERSION 0.1.0 LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+
+add_executable(KISP-v2 main.cpp
+    src/error.hpp)
+target_sources(KISP-v2 PRIVATE
+
+)
+target_include_directories(KISP-v2 
+PRIVATE 
+    src
+    src/interpreter 
+    src/parser 
+    src/scanner 
+    src/semantic-analyzer
+)
+
+include(CTest)
+enable_testing()
+
+add_executable(scanner-test test/scanner/scanner_test.cpp)
+target_include_directories(scanner-test
+PRIVATE
+    src
+    src/scanner
+    vendor
+)
+target_sources(scanner-test 
+PRIVATE 
+    src/scanner/scanner.cpp
+)
+
+set(CPACK_PROJECT_NAME ${PROJECT_NAME})
+set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+include(CPack)
