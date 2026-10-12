@@ -34,6 +34,7 @@ enum TypeToken
 
     // Datatype labels
     DTYPE_INT, DTYPE_UINT, DTYPE_FLOAT, DTYPE_DOUBLE, DTYPE_BOOL, DTYPE_STRING, DTYPE_CHAR,
+    DTYPE_VOID,
 
     // Misc
     PRINT,

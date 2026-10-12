@@ -8,13 +8,13 @@ TEST_CASE("Testing keywords")
 {
     std::string source = "if else nil while for try "
     "catch continue break return print true false "
-    "let self struct enum int double char bool string";
+    "let self struct enum int double char bool string void";
 
     std::vector<TypeToken> token_type_test = {
         IF, ELSE, NIL, WHILE, FOR, TRY, CATCH, CONTINUE,
         BREAK, RETURN, PRINT, BLIT_TRUE, BLIT_FALSE,
         LET, SELF, STRUCT, ENUM, DTYPE_INT, DTYPE_DOUBLE,
-        DTYPE_CHAR, DTYPE_BOOL, DTYPE_STRING
+        DTYPE_CHAR, DTYPE_BOOL, DTYPE_STRING, DTYPE_VOID
     };
 
     Scanner scanner;

@@ -21,7 +21,7 @@ struct PrintStmt;
 struct ExprStmt;
 
 using Stmt = std::variant<
-                        VarDeclStmt, 
+                        VarDeclStmt, FuncDefStmt, StructDefStmt,
                         IfStmt, ForStmt, WhileStmt, ReturnStmt, PrintStmt, BlockStmt, ExprStmt
                                 >;
 
@@ -36,7 +36,7 @@ struct FuncDefStmt
 {
     std::string identifier;
     std::vector<std::pair<std::string, Token>> param;
-    int arity;
+    long long unsigned int arity;
     Token return_type;
     std::unique_ptr<Stmt> function;
 };

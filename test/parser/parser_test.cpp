@@ -7,6 +7,14 @@
 #include <string>
 #include <vector>
 
+struct StmtPrinter
+{
+    void operator()(const VarDeclStmt& var_decl_stmt);
+    void operator()(const FuncDefStmt& func_def_stmt);
+
+};
+
+
 std::string getExprString(const Expr& expr)
 {
     std::string result = "";
@@ -249,4 +257,44 @@ TEST_CASE("Testing While Statements")
     auto block = std::move(std::get<ExprStmt>(*while_stmt.stmt).expr);
     expr_string = getExprString(*block);
     CHECK(expr_string == "(7+2)");
+}
+
+TEST_CASE("Testing Function Declaration Statements")
+{
+    Scanner scanner;
+    
+    std::string source = "func foo(x : int, y : bool) -> int {}";
+
+    scanner.loadSource(source);
+    auto tokens = scanner.scan();
+
+    Parser parser;
+    parser.loadTokens(tokens);
+
+    auto stmt = parser.declaration();
+    auto& func_def_stmt = std::get<FuncDefStmt>(*stmt);
+
+    CHECK(func_def_stmt.identifier == "foo");
+    CHECK(func_def_stmt.arity == 2);
+    CHECK(func_def_stmt.param[0].first == "x");
+    CHECK(func_def_stmt.param[0].second.type == DTYPE_INT);
+    CHECK(func_def_stmt.param[1].first == "y");
+    CHECK(func_def_stmt.param[1].second.type == DTYPE_BOOL);
+    CHECK(func_def_stmt.return_type.type == DTYPE_INT);
+}
+
+TEST_CASE("Testing struct declaration statements")
+{
+    Scanner scanner;
+    
+    std::string source = "struct foo {let x : int; let y : bool;};";
+
+    scanner.loadSource(source);
+    auto tokens = scanner.scan();
+
+    Parser parser;
+    parser.loadTokens(tokens);
+
+    auto stmt = parser.declaration();
+    auto& struct_def_stmt = std::get<StructDefStmt>(*stmt);
 }

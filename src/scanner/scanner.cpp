@@ -27,7 +27,8 @@ Scanner::Scanner()
         {"double", DTYPE_DOUBLE},
         {"char", DTYPE_CHAR},
         {"bool", DTYPE_BOOL},
-        {"string", DTYPE_STRING}
+        {"string", DTYPE_STRING},
+        {"void", DTYPE_VOID}
     };
 }
 

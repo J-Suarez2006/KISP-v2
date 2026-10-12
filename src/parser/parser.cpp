@@ -251,8 +251,6 @@ std::unique_ptr<Stmt> Parser::parseBlockStmt()
         block.push_back(declaration());
     }
 
-    consume({RIGHT_CURLY_BRACE}, "Expected \'}\'");
-
     return std::make_unique<Stmt>(BlockStmt{
         .block = std::move(block)
     });
@@ -321,9 +319,79 @@ std::unique_ptr<Stmt> Parser::parseVarDeclStmt()
     });
 }
 
+std::unique_ptr<Stmt> Parser::parseFuncDefStmt()
+{
+    consume({IDENTIFIER}, "Expected identifier.");
+    std::string id = prev().lexeme;
+    consume({LEFT_PAREN}, "Expected \'(\'.");
+
+    std::vector<std::pair<std::string, Token>> param;
+
+    while(match({IDENTIFIER}))
+    {
+        std::string param_id = prev().lexeme;
+
+        consume({COLON}, "Expected \':\'.");
+
+        Token data_type = consume({
+            DTYPE_INT, DTYPE_UINT, DTYPE_FLOAT, DTYPE_DOUBLE, 
+            DTYPE_BOOL, DTYPE_STRING, DTYPE_CHAR, IDENTIFIER
+        }, "Expected parameter datatype.");
+
+        param.push_back({param_id, data_type});
+
+        if (check(RIGHT_PAREN)) break;
+        
+        consume({COMMA}, "Expected \',\'/");
+    }
+
+    std::cout << m_tokens[m_idx].lexeme;
+    consume({RIGHT_PAREN}, "Expected \')\'.");
+    consume({ARROW}, "Expected \')\'.");
+
+    Token return_type = consume({
+            DTYPE_INT, DTYPE_UINT, DTYPE_FLOAT, DTYPE_DOUBLE, 
+            DTYPE_BOOL, DTYPE_STRING, DTYPE_CHAR, DTYPE_VOID, IDENTIFIER}, 
+            "Expected return type.");
+
+    consume({LEFT_CURLY_BRACE}, "Expected \'{\'.");
+
+    auto block = parseBlockStmt();
+
+    return std::make_unique<Stmt>(FuncDefStmt{
+        .identifier = id,
+        .param = param,
+        .arity = param.size(),
+        .return_type = return_type,
+        .function = std::move(block)
+    });
+}
+
+std::unique_ptr<Stmt> Parser::parseStructDefStmt()
+{
+    consume({IDENTIFIER}, "Expected identifier.");
+    std::string id = prev().lexeme;
+    consume({LEFT_PAREN}, "Expected \'{\'.");
+
+    std::vector<std::unique_ptr<Stmt>> definitions;
+
+    while(!match({RIGHT_CURLY_BRACE}))
+    {
+        definitions.push_back(declaration());
+    }
+
+    consume({SEMICOLON}, "Expected \';\'.");
+
+    return std::make_unique<Stmt>(StructDefStmt{
+        .identifier = id, .definitions = std::move(definitions)
+    });
+}
+
 std::unique_ptr<Stmt> Parser::declaration()
 {
     if(match({LET})) return parseVarDeclStmt();
+    if(match({FUNC})) return parseFuncDefStmt();
+    if(match({STRUCT})) return parseStructDefStmt();
 
     return statement();
 }
