@@ -69,7 +69,6 @@ class Parser
         if(check(token_type)) return advance();
 
         syntaxError(line(), message);
-        synchronize();
         throw std::runtime_error(message);
     }
 
@@ -81,21 +80,23 @@ class Parser
         }
 
         syntaxError(line(), message);
-        synchronize();
         throw std::runtime_error(message);
     }
 
+    std::unique_ptr<Expr> assignment();
+    std::unique_ptr<Expr> logicalOr();
+    std::unique_ptr<Expr> logicalAnd();
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> comparison();
     std::unique_ptr<Expr> term();
     std::unique_ptr<Expr> factor();
     std::unique_ptr<Expr> unary();
+    std::unique_ptr<Expr> call();
     std::unique_ptr<Expr> primary();
 
     public:
     Parser();
     void loadTokens(std::vector<Token> tokens);
-    
     void reset();
     std::unique_ptr<Expr> parseExpr();
 
@@ -114,8 +115,6 @@ class Parser
     std::unique_ptr<Stmt> parseStructDefStmt();
 
     std::unique_ptr<Stmt> declaration();
-
-    
 
     std::vector<std::unique_ptr<Stmt>> parse();
 };

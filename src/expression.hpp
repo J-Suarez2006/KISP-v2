@@ -5,13 +5,15 @@
 
 #include <memory>
 #include <variant>
+#include <vector>
 
 struct LiteralExpr;
 struct UnaryExpr;
 struct BinaryExpr;
 struct GroupedExpr;
+struct CallExpr;
 
-using Expr = std::variant<LiteralExpr, UnaryExpr, BinaryExpr, GroupedExpr>;
+using Expr = std::variant<LiteralExpr, UnaryExpr, CallExpr, BinaryExpr, GroupedExpr>;
 
 struct LiteralExpr
 {
@@ -22,6 +24,12 @@ struct UnaryExpr
 {
     Token op;
     std::unique_ptr<Expr> expr;
+};
+
+struct CallExpr
+{
+    std::unique_ptr<Expr> callee;
+    std::vector<std::unique_ptr<Expr>> args;
 };
 
 struct BinaryExpr

@@ -48,6 +48,23 @@ std::string getExprString(const Expr& expr)
         result += getExprString(*grouped.expr);
         result +=  ")";
     }
+    else if (std::holds_alternative<CallExpr>(expr))
+    {
+        auto& call = std::get<CallExpr>(expr);
+        result +=  "(";
+        result += ("callee: " + getExprString(*call.callee));
+        result += "args: (";
+        
+        for (auto& arg : call.args)
+        {
+            result += getExprString(*arg);
+            result += ", ";
+        }        
+
+        result += ")";
+        result +=  ")";
+
+    }
     
     return result;
 }
@@ -77,6 +94,18 @@ TEST_CASE("Testing Expression Parsing")
 
     ast_string = getExprString(*AST);
     CHECK(ast_string == "(8+((-3)/7))");
+
+
+    source = "foo(54, 32)()";
+
+    scanner.loadSource(source);
+    parser.loadTokens(scanner.scan());
+
+    AST = parser.parseExpr();
+
+    ast_string = getExprString(*AST);
+
+    std::cout << ast_string;
 }
 
 TEST_CASE("Testing Variable Declarations")

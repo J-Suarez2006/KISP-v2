@@ -32,7 +32,61 @@ void Parser::synchronize()
 /* Expression Parsing */
 std::unique_ptr<Expr> Parser::parseExpr()
 {
-    return equality();
+    return assignment();
+}
+std::unique_ptr<Expr> Parser::assignment()
+{
+    auto expr = logicalOr();
+
+    while (match({EQUALS}))
+    {
+        Token op = prev();
+        auto rhs = logicalOr();
+
+        expr = std::make_unique<Expr>(BinaryExpr{
+            .op = op,
+            .lhs = std::move(expr),
+            .rhs = std::move(rhs)
+        });
+    }
+
+    return expr;
+}
+std::unique_ptr<Expr> Parser::logicalOr()
+{
+    auto expr = logicalAnd();
+
+    while (match({PIPE_PIPE}))
+    {
+        Token op = prev();
+        auto rhs = logicalAnd();
+
+        expr = std::make_unique<Expr>(BinaryExpr{
+            .op = op,
+            .lhs = std::move(expr),
+            .rhs = std::move(rhs)
+        });
+    }
+
+    return expr;
+}
+std::unique_ptr<Expr> Parser::logicalAnd()
+{
+    auto expr = equality();
+
+    while (match({AND_AND}))
+    {
+        Token op = prev();
+        auto rhs = equality();
+
+        expr = std::make_unique<Expr>(BinaryExpr{
+            .op = op,
+            .lhs = std::move(expr),
+            .rhs = std::move(rhs)
+        });
+    }
+
+    return expr;
 }
 std::unique_ptr<Expr> Parser::equality()
 {
@@ -116,7 +170,7 @@ std::unique_ptr<Expr> Parser::unary()
     if (match({BANG, MINUS}))
     {
         Token op = prev();
-        auto expr = unary();
+        auto expr = call();
 
         return std::make_unique<Expr>(UnaryExpr{
             .op = op,
@@ -124,12 +178,38 @@ std::unique_ptr<Expr> Parser::unary()
         });
     }
 
-    return primary();
+    return call();
+}
+std::unique_ptr<Expr> Parser::call()
+{
+    auto expr = primary();
+
+    while (match({LEFT_PAREN}))
+    {
+        std::vector<std::unique_ptr<Expr>> args;
+
+        if (!check(RIGHT_PAREN))
+        {
+            do 
+            {
+                args.push_back(parseExpr());
+            } while (match({COMMA}));
+        }
+
+        consume({RIGHT_PAREN}, "Expected \')\' after call.");
+
+        expr = std::make_unique<Expr>(CallExpr{
+            .callee = std::move(expr),
+            .args = std::move(args)
+        });
+    }
+
+    return expr;
 }
 std::unique_ptr<Expr> Parser::primary()
 {
     if (match({
-        BLIT_FALSE, BLIT_TRUE, NUMBER, STRING_LITERAL, NIL
+        BLIT_FALSE, BLIT_TRUE, NUMBER, STRING_LITERAL, NIL, IDENTIFIER
     }))
     {
         return std::make_unique<Expr>(LiteralExpr{
@@ -279,24 +359,16 @@ std::unique_ptr<Stmt> Parser::statement()
 /* Declarations */
 std::unique_ptr<Stmt> Parser::parseVarDeclStmt()
 {
-    if(!match({IDENTIFIER}))
-    {
-        syntaxError(line(), "Expected identifier.");
-        synchronize();
-    }
+    consume(IDENTIFIER, "Expected identifier.");
 
     Token id = prev();
 
-    consume({COLON}, "expected \':\'");
+    consume(COLON, "expected \':\'");
 
-    if(!match({
+    consume({
         DTYPE_BOOL, DTYPE_CHAR, DTYPE_DOUBLE, 
         DTYPE_FLOAT, DTYPE_INT, DTYPE_UINT, DTYPE_STRING, IDENTIFIER
-    }))
-    {
-        syntaxError(line(), "Expected data type.");
-        synchronize();
-    }
+    }, "Expected data type.");
 
     auto data_type = prev();
 
@@ -371,7 +443,7 @@ std::unique_ptr<Stmt> Parser::parseStructDefStmt()
 {
     consume({IDENTIFIER}, "Expected identifier.");
     std::string id = prev().lexeme;
-    consume({LEFT_PAREN}, "Expected \'{\'.");
+    consume({LEFT_CURLY_BRACE}, "Expected \'{\'.");
 
     std::vector<std::unique_ptr<Stmt>> definitions;
 
@@ -394,4 +466,24 @@ std::unique_ptr<Stmt> Parser::declaration()
     if(match({STRUCT})) return parseStructDefStmt();
 
     return statement();
+}
+
+// Parse
+std::vector<std::unique_ptr<Stmt>> Parser::parse()
+{
+    std::vector<std::unique_ptr<Stmt>> result;
+
+    while (!isAtEnd())
+    {
+        try 
+        {
+            result.push_back(declaration());
+        }
+        catch (std::runtime_error& e)
+        {
+            synchronize();
+        }
+    }
+
+    return result;
 }
