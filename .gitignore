@@ -1,3 +1,5 @@
 todo.txt
 out/
 grammar.txt
+semanticanalyzer.txt 
+src/interpreter/vm-spec.txt

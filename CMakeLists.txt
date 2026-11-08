@@ -15,7 +15,7 @@ PRIVATE
     src/interpreter 
     src/parser 
     src/scanner 
-    src/semantic-analyzer
+    src/semantic-analysis
 )
 
 include(CTest)

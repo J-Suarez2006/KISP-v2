@@ -17,18 +17,6 @@ void Parser::reset()
     m_tokens.clear();
 }
 
-void Parser::synchronize()
-{
-    while(!match({SEMICOLON, RIGHT_CURLY_BRACE}) && !isAtEnd())
-    {
-        advance();
-    }
-
-    if (isAtEnd()) return;
-
-    advance();
-}
-
 /* Expression Parsing */
 std::unique_ptr<Expr> Parser::parseExpr()
 {
@@ -186,6 +174,7 @@ std::unique_ptr<Expr> Parser::call()
 
     while (match({LEFT_PAREN}))
     {
+        Token l_paren = prev();
         std::vector<std::unique_ptr<Expr>> args;
 
         if (!check(RIGHT_PAREN))
@@ -200,6 +189,7 @@ std::unique_ptr<Expr> Parser::call()
 
         expr = std::make_unique<Expr>(CallExpr{
             .callee = std::move(expr),
+            .l_paren = l_paren,
             .args = std::move(args)
         });
     }
@@ -219,9 +209,11 @@ std::unique_ptr<Expr> Parser::primary()
 
     if (match({LEFT_PAREN}))
     {
+        Token l_paren = prev();
         auto expr = parseExpr();
         consume(RIGHT_PAREN, "Expected \'}\'");
         return std::make_unique<Expr>(GroupedExpr{
+            .l_paren = l_paren,
             .expr = std::move(expr)
         });
     }
@@ -396,6 +388,7 @@ std::unique_ptr<Stmt> Parser::parseFuncDefStmt()
     consume({IDENTIFIER}, "Expected identifier.");
     std::string id = prev().lexeme;
     consume({LEFT_PAREN}, "Expected \'(\'.");
+    auto left_curly_brace = prev();
 
     std::vector<std::pair<std::string, Token>> param;
 
@@ -435,7 +428,8 @@ std::unique_ptr<Stmt> Parser::parseFuncDefStmt()
         .param = param,
         .arity = param.size(),
         .return_type = return_type,
-        .function = std::move(block)
+        .function = std::move(block),
+        .left_curly_brace = left_curly_brace
     });
 }
 
@@ -444,6 +438,7 @@ std::unique_ptr<Stmt> Parser::parseStructDefStmt()
     consume({IDENTIFIER}, "Expected identifier.");
     std::string id = prev().lexeme;
     consume({LEFT_CURLY_BRACE}, "Expected \'{\'.");
+    auto left_curly_brace = prev();
 
     std::vector<std::unique_ptr<Stmt>> definitions;
 
@@ -455,7 +450,7 @@ std::unique_ptr<Stmt> Parser::parseStructDefStmt()
     consume({SEMICOLON}, "Expected \';\'.");
 
     return std::make_unique<Stmt>(StructDefStmt{
-        .identifier = id, .definitions = std::move(definitions)
+        .identifier = id, .definitions = std::move(definitions), .left_curly_brace = left_curly_brace
     });
 }
 
@@ -475,15 +470,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse()
 
     while (!isAtEnd())
     {
-        try 
-        {
-            result.push_back(declaration());
-        }
-        catch (std::runtime_error& e)
-        {
-            synchronize();
-        }
+        result.push_back(declaration());
     }
-
     return result;
 }

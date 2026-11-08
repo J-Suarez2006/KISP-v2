@@ -15,9 +15,7 @@ class Parser
     private:
     std::vector<Token> m_tokens;
     int m_idx;
-
-    void synchronize();
-
+    
     const inline int line()
     {
         return m_tokens[m_idx].line;
@@ -98,6 +96,7 @@ class Parser
     Parser();
     void loadTokens(std::vector<Token> tokens);
     void reset();
+    
     std::unique_ptr<Expr> parseExpr();
 
     std::unique_ptr<Stmt> parseIfStmt();
